@@ -11,7 +11,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "~=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,17 +22,71 @@ dependencies = [
     "black==22.8.0",
     "joblib",
     "tabulate",
-    "tensorboardX",
+    "tensorboardx",
     "tqdm",
     "sentencepiece",
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "loguru>=0.7.3",
+    "ninja>=1.11.1.3",
+    "tensorboard>=2.19.0",
+    "fire>=0.7.0",
+    "easydict>=1.13",
+    "transformers==4.48.1",
+    "awscli>=1.37.25",
+    "rpyc>=6.0.1",
+    "pythonping>=1.1.4",
+    "torch>=2.5.1",
+    "tzdata>=2025.1",
+    "hydra-core>=0.11.3",
+    "accelerate>=1.4.0",
+    "redis>=5.2.1",
+    "opentelemetry-api>=1.30.0",
+    "opentelemetry-sdk>=1.30.0",
+    "opentelemetry-exporter-otlp>=1.30.0",
+    "prometheus-client>=0.21.1",
+    "omegaconf>=1.4.1",
+    "mypy-extensions>=1.0.0",
+    "pathspec>=0.12.1",
+    "nvitop>=1.4.2",
+    "antlr4-python3-runtime==4.11.0",
+    "ray==2.40.0",
+    "deepspeed==0.16.0",
+    "vllm==0.6.5",
+    "peft>=0.14.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=6.2.5"
 ]
+# flash-attn related setups
+compile = ["flash-attn>=2.7.2.post1"]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu121", marker = "platform_system != 'Darwin'"},
+]
+hydra-core = { git = "https://github.com/facebookresearch/hydra.git" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv]
+python-preference = "only-managed"
+no-build-isolation-package = ["flash-attn"]
+
+[[tool.uv.dependency-metadata]]
+name = "flash-attn"
+version = "2.7.2.post1"
+requires-dist = ["torch", "setuptools"]
 
 [tool.setuptools]
 packages = ["orz",]
