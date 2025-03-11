@@ -71,12 +71,14 @@ class PPOLlamaExpConfig(BasePPOLlamaExpConfig):
     zero_stage: int = 3
 
     # path related settings
-    pretrain: Optional[str] = "Qwen/Qwen2.5-7B" # TODO: or put your downloaded model path here!
+    # pretrain: Optional[str] = "Qwen/Qwen2.5-7B" # TODO: or put your downloaded model path here!
+    pretrain: Optional[str] = "/mnt/o1-reproduce/checkpoints/Qwen2.5-7B"
     reward_pretrain: Optional[str] = None
     save_interval: int = 50
     ckpt_path: str = f"orz_ckpt/{file_name}"
     save_path: str = f"orz_ckpt/{file_name}"
-    tensorboard_log_dir: str = f"orz_logs/{file_name}"
+    # tensorboard_log_dir: str = f"orz_logs/{file_name}"
+    tensorboard_log_dir: str = f"/mnt/step2-alignment-jfs/zhanghan/tensorboard/orz_logs/{file_name}"
 
     # MathTrain dataset and Math500 eval dataset
     # data related settings
@@ -123,10 +125,9 @@ class PPOLlamaExpConfig(BasePPOLlamaExpConfig):
     eval_interval: int = 10 if not DEBUG_MODE else 5
 
     # generate related settings
+    packing_max_len: int = 16384
     generate_max_len: int = 8000 if not DEBUG_MODE else 512
     max_len: int = 8192  # TODO: change to larger later
-    packing_samples: bool = True
-    packing_max_len: int = generate_max_len + prompt_max_len
     temperature: float = 1.0
     top_p: float = 1.0
     top_k: int = -1
