@@ -374,7 +374,22 @@ def create_vllm_engines(
     gpu_memory_utilization: float = 0.85,
     max_num_seqs: int = 256,
     colocate_pg: Optional[PlacementGroup] = None,
+    vllm_impl: str = "old"
 ):
+    if vllm_impl != "colocate":
+        return _create_colocate_vllm_engines(
+            num_engines=num_engines,
+            tensor_parallel_size=tensor_parallel_size,
+            pretrain=pretrain,
+            seed=seed,
+            enable_prefix_caching=enable_prefix_caching,
+            max_model_len=max_model_len,
+            enable_chunked_prefill=enable_chunked_prefill,
+            max_num_batched_tokens=max_num_batched_tokens,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_num_seqs=max_num_seqs,
+            colocate_pg=colocate_pg,
+        )
     vllm_engines = []
     if tensor_parallel_size > 1:
         assert not colocate_with_actor, "colocate_with_actor is not supported when tensor_parallel_size > 1"
@@ -470,3 +485,142 @@ def check_reflection_pattern(response: str) -> dict[str, int]:
         # can only be followed by a comma or a space
         res[word] = len(re.findall(word, response))
     return res
+
+
+def _create_colocate_vllm_engines(
+    num_engines: int,
+    tensor_parallel_size: int,
+    pretrain: str,
+    seed: int,
+    enable_prefix_caching: bool,
+    max_model_len: int,
+    enable_chunked_prefill: bool = False,
+    max_num_batched_tokens: int = 2048,
+    gpu_memory_utilization: float = 0.85,
+    max_num_seqs: int = 256,
+    colocate_pg: Optional[PlacementGroup] = None,
+):
+    from orz.exp_engine.accelerators.inference.vllm_engine import ColocateVllmActor
+
+    vllm_engines = []
+
+    bundles_to_node_id = ray.util.placement_group_table(colocate_pg)["bundles_to_node_id"]
+    nodes = ray.nodes()
+
+    port = 51995  # TODO (zhanghan): make it adaptive
+
+    for i in range(num_engines):
+        offset = i * tensor_parallel_size
+
+        actors = []
+        for local_rank in range(tensor_parallel_size):
+            node_id = bundles_to_node_id[offset]
+            for node in nodes:
+                if node["NodeID"] == node_id:
+                    ip = node["NodeManagerAddress"]
+                    break
+            scheduling_strategy = PlacementGroupSchedulingStrategy(
+                placement_group=colocate_pg,
+                placement_group_capture_child_tasks=True,
+                placement_group_bundle_index=offset + local_rank,
+            )
+            actor = (
+                ray.remote(ColocateVllmActor)
+                .options(
+                    num_cpus=0.1,
+                    num_gpus=0.1,
+                    scheduling_strategy=scheduling_strategy,
+                    runtime_env={
+                        "env_vars": {
+                            "RANK": str(local_rank),
+                            "LOCAL_RANK": str(local_rank),
+                            "WORLD_SIZE": str(tensor_parallel_size),
+                            "MASTER_ADDR": str(ip),
+                            "MASTER_PORT": str(port + i),
+                        }
+                    },
+                )
+                .remote(
+                    model_path=pretrain,
+                    tensor_parallel_size=tensor_parallel_size,
+                    seed=seed + i,
+                    enable_prefix_caching=enable_prefix_caching,
+                    enforce_eager=True,
+                    max_model_len=max_model_len,
+                    enable_chunked_prefill=enable_chunked_prefill,
+                    max_num_batched_tokens=max_num_batched_tokens if enable_chunked_prefill else None,
+                    gpu_memory_utilization=gpu_memory_utilization,
+                    max_num_seqs=max_num_seqs,
+                    block_size=256,
+                )
+            )
+
+            actors.append(actor)
+
+        vllm_engines.append(actors)
+
+    # Offload
+    offload_refs = []
+    for engines in vllm_engines:
+        for tp_engine in engines:
+            offload_refs.append(tp_engine.offload_to_cpu.remote())
+    ray.get(offload_refs)
+
+    return vllm_engines
+
+
+def _get_master_addr_port_by_bundle_helper():
+    import socket
+
+    ip = socket.gethostbyname(socket.gethostname())
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+    return ip, port
+
+
+def get_master_addr_port_by_bundle(pg, bundle_index):
+    scheduling_strategy = PlacementGroupSchedulingStrategy(
+        placement_group=pg, placement_group_bundle_index=bundle_index
+    )
+    return ray.get(
+        ray.remote(_get_master_addr_port_by_bundle_helper)
+        .options(
+            num_cpus=0.01,
+            scheduling_strategy=scheduling_strategy,
+        )
+        .remote()
+    )
+
+
+def detokenize_vllm_outputs(responses, tokenizer):
+    out_token_ids = []
+    for resp in responses:
+        for output in resp.outputs:
+            out_token_ids.append(output.token_ids)
+    out_texts = tokenizer.batch_decode(out_token_ids)
+    i = 0
+    for resp in responses:
+        for output in resp.outputs:
+            output.text = out_texts[i]
+            i += 1
+    return responses
+
+
+def process_stop(responses, stop, tokenizer):
+    out_texts = []
+    for resp in responses:
+        for output in resp.outputs:
+            for s in stop:
+                if s in output.text:
+                    output.text = output.text.split(s)[0] + s
+                    output.stop_reason = s
+                    output.finish_reason = "stop"
+            out_texts.append(output.text)
+    token_ids = tokenizer(out_texts).input_ids
+    i = 0
+    for resp in responses:
+        for output in resp.outputs:
+            output.token_ids = token_ids[i]
+            i += 1
+    return responses
