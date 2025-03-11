@@ -64,7 +64,7 @@ class SPMDGPUExecutor(ExecutorBase):
     def _init_workers_sp(self, model, distributed_init_method: str):
         # Lazy import the Worker to avoid importing torch.cuda/xformers
         # before CUDA_VISIBLE_DEVICES is set in the Worker
-        from oone.third_party.vllm import Worker  # pylint: disable=import-outside-toplevel
+        from orz.third_party.vllm import Worker  # pylint: disable=import-outside-toplevel
 
         rank = int(os.getenv("RANK"))
         local_rank = int(os.getenv("LOCAL_RANK"))

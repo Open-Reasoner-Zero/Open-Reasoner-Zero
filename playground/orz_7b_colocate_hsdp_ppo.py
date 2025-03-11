@@ -25,8 +25,6 @@ import torch
 import torch.distributed as dist
 from loguru import logger
 from omegaconf.listconfig import ListConfig
-from openrlhf.models import Actor
-from openrlhf.models import PolicyLoss
 from ray.util.placement_group import PlacementGroup, placement_group
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import StateDictType
@@ -34,8 +32,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from typing_extensions import override
 
-from orz.exps.examples.ppo.ppo_base_exp import BasePPOExp, BasePPOLlamaExpConfig
-from orz.ppo.actors import CriticRayActorBase, PolicyRayActorBase, PPORayActorGroup
+from orz.exps.examples.ppo.ppo_base_exp import BasePPOExp, BasePPOExpConfig
+from orz.ppo.models import Actor
+from orz.ppo.actors import CriticRayActorBase, PolicyRayActorBase, PPORayActorGroup, PolicyLoss
 from orz.ppo.utils import create_vllm_engines, get_master_addr_port_by_bundle
 from playground.orz_7b_ppo import CustomRewardTrainer, CustomDataset, EvalCustomDataset
 
@@ -47,7 +46,7 @@ executor = ThreadPoolExecutor(max_workers=64)
 
 
 @dataclass
-class PPOLlamaExpConfig(BasePPOLlamaExpConfig):
+class PPOLlamaExpConfig(BasePPOExpConfig):
     use_compute_reward_fn: bool = True
     use_orm_score: bool = False
 
@@ -71,14 +70,12 @@ class PPOLlamaExpConfig(BasePPOLlamaExpConfig):
     zero_stage: int = 3
 
     # path related settings
-    # pretrain: Optional[str] = "Qwen/Qwen2.5-7B" # TODO: or put your downloaded model path here!
-    pretrain: Optional[str] = "/mnt/o1-reproduce/checkpoints/Qwen2.5-7B"
+    pretrain: Optional[str] = "Qwen/Qwen2.5-7B" # TODO: or put your downloaded model path here!
     reward_pretrain: Optional[str] = None
     save_interval: int = 50
     ckpt_path: str = f"orz_ckpt/{file_name}"
     save_path: str = f"orz_ckpt/{file_name}"
-    # tensorboard_log_dir: str = f"orz_logs/{file_name}"
-    tensorboard_log_dir: str = f"/mnt/step2-alignment-jfs/zhanghan/tensorboard/orz_logs/{file_name}"
+    tensorboard_log_dir: str = f"orz_logs/{file_name}"
 
     # MathTrain dataset and Math500 eval dataset
     # data related settings
@@ -147,6 +144,7 @@ class PPOLlamaExpConfig(BasePPOLlamaExpConfig):
     num_ref_shards: int = 8
     num_critic_shards: int = 8
     num_actor_shards: int = 8
+    offload_ref_model: bool = True
 
 
 class BaseFsdpRayActor:
@@ -263,14 +261,15 @@ class BaseFsdpRayActor:
         auto_wrap_policy = partial(transformer_auto_wrap_policy, transformer_layer_cls={transformer_layer_cls})
 
         model = FSDP(
-            module.float(),
+            module.float().cuda(),
             device_id=device_id,
             process_group=process_group,
             sharding_strategy=sharding_strategy,
             auto_wrap_policy=auto_wrap_policy,
             mixed_precision=MixedPrecision(
                 param_dtype=torch.bfloat16,
-                reduce_dtype=torch.float16
+                reduce_dtype=torch.float16,
+                buffer_dtype=torch.bfloat16,
             ),
         )
 
@@ -343,7 +342,7 @@ class BaseFsdpRayActor:
             StateDictType.FULL_STATE_DICT,
             state_dict_config=FullStateDictConfig(rank0_only=True, offload_to_cpu=True),
         ):
-            state_dict = self.model.state_dict()
+            state_dict = {k: v.to(torch.bfloat16) for k, v in self.model.state_dict().items()}
 
             if self.global_rank == 0:
                 self.save_safetensors(
@@ -384,27 +383,20 @@ class BaseFsdpRayActor:
 class FsdpCriticRayActor(BaseFsdpRayActor, CriticRayActorBase):
     def init_model_from_pretrained(self, pretrain, cfg=None):
         import torch.optim as optim
-        from openrlhf.models import ValueLoss, get_llm_for_sequence_regression
-        from transformers import AutoConfig, AutoModel
+        from orz.ppo.actors import ValueLoss, get_llm_for_sequence_regression
 
         self.args = cfg
 
-        with torch.device("meta"):
-            AutoModel.from_config(AutoConfig.from_pretrained(pretrain))
         critic = get_llm_for_sequence_regression(
             pretrain,
             "critic",
             normalize_reward=self.args.normalize_reward,
             use_flash_attention_2=self.args.flash_attn,
-            bf16=self.args.bf16,
-            load_in_4bit=self.args.load_in_4bit,
-            lora_rank=self.args.lora_rank,
-            lora_alpha=self.args.lora_alpha,
+            bf16=False,
             target_modules=self.args.target_modules,
-            lora_dropout=self.args.lora_dropout,
             value_head_prefix=self.args.value_head_prefix,
             init_value_head=self.args.pretrain == self.args.critic_pretrain,
-            packing_samples=self.args.packing_samples,
+            packing_samples=True,
         )
 
         if self.args.gradient_checkpointing:
@@ -502,7 +494,7 @@ class FsdpCriticRayActor(BaseFsdpRayActor, CriticRayActorBase):
         return status_mean
 
     def training_step(self, experience, global_steps, local_step, accumulation_steps):
-        from openrlhf.models.utils import masked_mean
+        from orz.ppo.utils import masked_mean
 
         if isinstance(experience.sequences, list):
             sequences = torch.cat(experience.sequences, dim=0).unsqueeze(0)
@@ -528,18 +520,12 @@ class FsdpCriticRayActor(BaseFsdpRayActor, CriticRayActorBase):
             packed_seq_lens=packed_seq_lens,
         )
         # loss function
-        critic_loss = self.critic_loss_fn(
+        loss = self.critic_loss_fn(
             values,
             old_values,
             returns,
             action_mask=experience.action_mask,
         )
-        # mixtral
-        if self.args.aux_loss_coef > 1e-8:
-            aux_loss = output.aux_loss
-        else:
-            aux_loss = 0
-        loss = critic_loss + aux_loss * self.args.aux_loss_coef
         loss = loss / accumulation_steps
         loss.backward()
         if (local_step + 1) % accumulation_steps == 0:
@@ -549,11 +535,14 @@ class FsdpCriticRayActor(BaseFsdpRayActor, CriticRayActorBase):
 
         # status
         status = {
-            "critic_loss": critic_loss.item(),
+            "critic_loss": loss.item(),
             "values": masked_mean(values, experience.action_mask).item(),
             "critic_lr": self.lr_scheduler.get_last_lr()[0],
         }
         return status
+
+    def save_model(self, tokenizer, iteration):
+        super().save_model(self.args.save_path, tokenizer, iteration, "critic")
 
 
 @ray.remote(num_gpus=1)
@@ -566,13 +555,9 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
         actor = Actor(
             pretrain,
             use_flash_attention_2=self.args.flash_attn,
-            bf16=self.args.bf16,
-            load_in_4bit=self.args.load_in_4bit,
-            lora_rank=self.args.lora_rank,
-            lora_alpha=self.args.lora_alpha,
+            bf16=False,
             target_modules=self.args.target_modules,
-            lora_dropout=self.args.lora_dropout,
-            packing_samples=self.args.packing_samples,
+            packing_samples=True,
         )
 
         if self.args.gradient_checkpointing:
@@ -701,27 +686,17 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
         return status_mean
 
     def training_step(self, experience, global_steps, local_step, accumulation_steps):
-        from openrlhf.models.utils import masked_mean
+        from orz.ppo.utils import masked_mean
 
         self.model.train()
 
-        # TODO: this is a bad indicator to say that data is packed...
-        if isinstance(experience.sequences, list):
-            sequences = torch.cat(experience.sequences, dim=0).unsqueeze(0)
-            old_action_log_probs = torch.cat(experience.action_log_probs, dim=0).unsqueeze(0)
-            base_action_log_probs = torch.cat(experience.base_action_log_probs, dim=0).unsqueeze(0)
-            advantages = torch.cat(experience.advantages, dim=0).unsqueeze(0)
-            num_actions = torch.cat(experience.num_actions, dim=0).long().tolist()
-            packed_seq_lens = torch.cat(experience.packed_seq_lens, dim=0).long().tolist()
-            attention_mask = torch.cat(experience.attention_mask, dim=0).unsqueeze(0)
-        else:
-            sequences = experience.sequences
-            old_action_log_probs = experience.action_log_probs
-            base_action_log_probs = experience.base_action_log_probs
-            advantages = experience.advantages
-            num_actions = experience.action_mask.size(1)
-            packed_seq_lens = None
-            attention_mask = experience.attention_mask
+        sequences = torch.cat(experience.sequences, dim=0).unsqueeze(0)
+        old_action_log_probs = torch.cat(experience.action_log_probs, dim=0).unsqueeze(0)
+        base_action_log_probs = torch.cat(experience.base_action_log_probs, dim=0).unsqueeze(0)
+        advantages = torch.cat(experience.advantages, dim=0).unsqueeze(0)
+        num_actions = torch.cat(experience.num_actions, dim=0).long().tolist()
+        packed_seq_lens = torch.cat(experience.packed_seq_lens, dim=0).long().tolist()
+        attention_mask = torch.cat(experience.attention_mask, dim=0).unsqueeze(0)
 
         # actor loss
         action_log_probs, output = self.model(
@@ -778,12 +753,6 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
 
             entropy = entropy_sum / total_tokens
 
-        # mixtral
-        if self.args.aux_loss_coef > 1e-8:
-            aux_loss = output.aux_loss
-        else:
-            aux_loss = 0
-
         # kl loss
         if self.args.use_kl_loss:
             kl_loss = action_log_probs - base_action_log_probs
@@ -795,7 +764,7 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
         else:
             kl_loss = 0
 
-        loss = actor_loss + aux_loss * self.args.aux_loss_coef + kl_loss * self.args.kl_loss_coef
+        loss = actor_loss + kl_loss * self.args.kl_loss_coef
         loss = loss / accumulation_steps
         loss.backward()
 
@@ -834,7 +803,7 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
         torch.cuda.empty_cache()
         for name, param in self.iter_fsdp_state_dict(self.model):
             if not isinstance(vllm_engines[0], list):
-                raise ValueError("Use vllm_impl=oone!")
+                raise ValueError("Use vllm_impl=colocate !")
             if not name.startswith("model."):
                 continue
             x = self.global_rank // self.args.vllm_tensor_parallel_size
@@ -845,11 +814,14 @@ class FsdpPolicyRayActor(BaseFsdpRayActor, PolicyRayActorBase):
             )
             ray.get(ref)
 
+    def save_model(self, tokenizer, iteration):
+        super().save_model(self.args.save_path, tokenizer, iteration, "policy")
+
 
 @ray.remote(num_gpus=1)
 class FSDPRefRayActor(BaseFsdpRayActor):
     def init_model_from_pretrained(self, pretrain, cfg=None):
-        from openrlhf.models.actor import Actor
+        from orz.ppo.actors import Actor
 
         self.args = cfg
         torch.cuda.set_device("cuda:0")
@@ -857,9 +829,9 @@ class FSDPRefRayActor(BaseFsdpRayActor):
         actor = Actor(
             pretrain,
             use_flash_attention_2=self.args.flash_attn,
-            bf16=self.args.bf16,
-            load_in_4bit=self.args.load_in_4bit,
-            packing_samples=self.args.packing_samples,
+            bf16=False,
+            target_modules=self.args.target_modules,
+            packing_samples=True,
         )
 
         if cfg.gradient_checkpointing:
@@ -1029,7 +1001,7 @@ class MyTrainer(CustomRewardTrainer):
                 critic_model = None
 
             # multiple reward models
-            if RewardRayActor is not None and not cfg.remote_rm_url and cfg.reward_pretrain:
+            if RewardRayActor is not None and cfg.reward_pretrain:
                 reward_pretrains = cfg.reward_pretrain.split(",")
                 reward_models = []
                 for _ in reward_pretrains:
@@ -1101,7 +1073,7 @@ class MyTrainer(CustomRewardTrainer):
                 critic_model = None
 
             # multiple reward models
-            if RewardRayActor is not None and not cfg.remote_rm_url and cfg.reward_pretrain:
+            if RewardRayActor is not None and cfg.reward_pretrain:
                 reward_pretrains = cfg.reward_pretrain.split(",")
                 reward_models = []
                 for _ in reward_pretrains:
@@ -1125,20 +1097,21 @@ class MyTrainer(CustomRewardTrainer):
                 refs.extend(
                     critic_model.async_init_model_from_pretrained(self.strategy, cfg.critic_pretrain, self._max_steps)
                 )
-            if not cfg.remote_rm_url and cfg.reward_pretrain:
+            if cfg.reward_pretrain:
                 for reward_model, reward_pretrain in zip(reward_models, reward_pretrains):
                     refs.extend(reward_model.async_init_model_from_pretrained(self.strategy, reward_pretrain))
             await asyncio.gather(*refs)
             await policy_model.async_run_method("_set_pad_token_id", self.tokenizer.pad_token_id)
         else:
             await asyncio.gather(*ref_model.async_init_model_from_pretrained(cfg.pretrain, cfg))
-            await ref_model.offload_to_cpu()
+            if cfg.offload_ref_model:
+                await ref_model.offload_to_cpu()
             await asyncio.gather(*policy_model.async_init_model_from_pretrained(cfg.pretrain, cfg))
             await policy_model.offload_to_cpu()
             if cfg.critic_pretrain:
                 await asyncio.gather(*critic_model.async_init_model_from_pretrained(cfg.critic_pretrain, cfg))
                 await critic_model.offload_to_cpu()
-            if not cfg.remote_rm_url and cfg.reward_pretrain:
+            if cfg.reward_pretrain:
                 for reward_model, reward_pretrain in zip(reward_models, reward_pretrains):
                     await asyncio.gather(*reward_model.async_init_model_from_pretrained(self.strategy, reward_pretrain))
 
@@ -1148,6 +1121,231 @@ class MyTrainer(CustomRewardTrainer):
         self.reward_model = reward_models
 
         logger.info("init policy/ref/critic/reward models done")
+
+    async def _offload_vllm_engines(self):
+        offload_tasks = []
+        if self.cfg.vllm_impl == "old":
+            for engine in self.vllm_engines:
+                offload_tasks.append(engine.offload_to_cpu.remote())
+        elif self.cfg.vllm_impl == "colocate":
+            for engines in self.vllm_engines:
+                for tp_engine in engines:
+                    offload_tasks.append(tp_engine.offload_to_cpu.remote())
+        await asyncio.gather(*offload_tasks)
+
+    async def _backload_vllm_engines(self, init_vllm_engines: bool = True):
+        backload_tasks = []
+        if self.cfg.vllm_impl == "old":
+            for engine in self.vllm_engines:
+                backload_tasks.append(engine.backload_to_gpu.remote())
+        elif self.cfg.vllm_impl == "colocate":
+            for engines in self.vllm_engines:
+                for tp_engine in engines:
+                    backload_tasks.append(tp_engine.backload_to_gpu.remote(init_vllm_engines))
+        await asyncio.gather(*backload_tasks)
+
+    async def _sync_policy_weights_to_vllm(self):
+        if self.cfg.vllm_impl == "colocate" or self.cfg.colocate_all:
+            await self.policy_model.async_run_method("_broadcast_to_vllm_cudaipc", self.vllm_engines)
+        else:
+            await self.policy_model.async_run_method("_broadcast_to_vllm", self.vllm_engines)
+            
+    def _get_generate_function(self, dp_rank: int):
+        llm = self.vllm_engines[dp_rank % len(self.vllm_engines)]
+
+        async def generate(prompts: list[str], truncate_prompt=True, **kwargs):
+            from vllm import SamplingParams
+
+            if truncate_prompt:
+                prompt_token_ids = self._tokenize(prompts, self.cfg.prompt_max_len, padding=False)["input_ids"]
+            else:
+                prompt_token_ids = self._tokenize(prompts, padding=False)["input_ids"]
+            if isinstance(llm, list):
+                refs = []
+                sampling_params = kwargs.pop("sampling_params", SamplingParams())
+                stop = sampling_params.stop
+                sampling_params.stop = []
+                sampling_params.detokenize = False
+                for engine in llm:
+                    refs.append(
+                        engine.generate.remote(
+                            prompt_token_ids=prompt_token_ids,
+                            sampling_params=sampling_params,
+                        )
+                    )
+                outputs = await asyncio.gather(*refs)
+                # Detokenize
+                from orz.ppo.utils import detokenize_vllm_outputs, process_stop
+
+                outputs = detokenize_vllm_outputs(outputs[0], self.tokenizer)
+                outputs = process_stop(outputs, stop, self.tokenizer)
+            else:
+                outputs = await llm.generate.remote(prompt_token_ids=prompt_token_ids, **kwargs)
+            responses = []
+            prompt_logprobs = []
+            finish_reasons = []
+            for i, prompt in enumerate(prompts):
+                content = outputs[i].outputs[0].text
+                finish_reasons.append(outputs[i].outputs[0].finish_reason)
+                responses.append(content)
+                if outputs[i].prompt_logprobs:
+                    prompt_logprobs.append(outputs[i].prompt_logprobs)
+            if len(prompt_logprobs) > 0:
+                return (
+                    responses,
+                    finish_reasons,
+                    prompt_logprobs,
+                )
+            else:
+                return responses, finish_reasons
+
+        return generate
+    
+    async def _init_cache_engine(self):
+        refs = []
+        for engines in self.vllm_engines:
+            for tp_engine in engines:
+                refs.append(tp_engine.init_cache_engine.remote())
+        await asyncio.gather(*refs)
+
+    async def train(self):
+        from orz.ppo.trainer import Timer, normalize_advantages
+
+        # 1. create rank0 policy model and vllm_engines groups, then boardcast weights to vllm engins
+        if self.cfg.colocate_all:
+            await self.policy_model.backload_to_gpu()
+            await self._backload_vllm_engines(init_vllm_engines=False)
+
+        await self.policy_model.async_run_method("_init_vllm_engines_actor_group", self.vllm_engines)
+        logger.info("Create vllm engine gourps done.")
+
+        async with Timer("Sync actor weights to vllm engines"):
+            await self._sync_policy_weights_to_vllm()
+
+        if self.cfg.colocate_all:
+            async with Timer("Offload policy model to cpu"):
+                await self.policy_model.offload_to_cpu()
+            await self._init_cache_engine()
+
+        # 2. main training loop
+        consumed_samples = 0
+        num_rollouts_per_episodes = (
+            self.num_update_steps_per_episodes
+            * self.cfg.train_batch_size
+            // self.cfg.max_epochs
+            // self.cfg.rollout_batch_size
+            // self.cfg.n_samples_per_prompt
+        )
+
+        self.global_step = consumed_samples // self.cfg.rollout_batch_size
+        start_episode = consumed_samples // self.cfg.rollout_batch_size // num_rollouts_per_episodes
+        consumed_samples = consumed_samples % (num_rollouts_per_episodes * self.cfg.rollout_batch_size)
+        for episode in range(start_episode, self.cfg.num_episodes):
+            pbar = tqdm(
+                range(self.prompts_dataloader.__len__()), desc=f"Episode [{episode + 1}/{self.cfg.num_episodes}]"
+            )
+            for iter, rand_prompts in enumerate(self.prompts_dataloader):
+
+                # 1. eval if enable eval
+                if self.cfg.enable_eval and (
+                    self.global_step % self.cfg.eval_interval == 0 or iter == len(self.prompts_dataloader) - 1
+                ):
+                    await self.eval()
+
+                # 3. make experiences, calculate advantages and returns
+                await self.make_experience(rand_prompts)
+
+                # check if has enough data
+                if len(self.replay_buffer) <= 0:
+                    if self.cfg.colocate_all:
+                        # skip, but transfer weight
+                        await self.policy_model.backload_to_gpu()
+                        await self._backload_vllm_engines()
+                        await self._sync_policy_weights_to_vllm()
+                        await self.policy_model.offload_to_cpu()
+                    continue
+
+                if self.cfg.advantage_normalize:
+                    self.replay_buffer = normalize_advantages(self.replay_buffer)
+
+                # serialize replay buffer to jsonl
+                async with Timer("Dumping replay buffer"):
+                    all_replay_buffer_save_path = os.path.join(self.cfg.save_path, "dumped_replay_buffer")
+                    os.makedirs(all_replay_buffer_save_path, exist_ok=True)
+                    dump_path = os.path.join(all_replay_buffer_save_path, f"iter{self.global_step}_replay_buffer.jsonl")
+                    with open(dump_path, "a") as f:
+                        logger.info(f"dumping replay buffer to {dump_path}")
+                        for item in self.replay_buffer:
+                            f.write(json.dumps(item.to_json()) + "\n")
+
+                num_policy_dp_nodes = self.cfg.actor_num_nodes * self.cfg.actor_num_gpus_per_node
+                num_critic_dp_nodes = self.cfg.critic_num_nodes * self.cfg.critic_num_gpus_per_node
+                policy_buffers = self.replay_buffer.split_to_n_batches(num_policy_dp_nodes)
+                if num_policy_dp_nodes != num_critic_dp_nodes:
+                    critic_buffers = self.replay_buffer.split_to_n_batches(num_critic_dp_nodes)
+                else:
+                    critic_buffers = policy_buffers
+
+                # 4. train policy/critic model
+                if self.cfg.colocate_all:
+                    if self.critic_model is not None:
+                        async with Timer("Critic model training"):
+                            await self.critic_model.backload_to_gpu()
+                            await self.ppo_local_train_critic(critic_buffers, self.global_step)
+                            await self.critic_model.offload_to_cpu()
+                    async with Timer("Actor model training"):
+                        await self.policy_model.backload_to_gpu()
+                        status = await self.ppo_local_train_policy(policy_buffers, self.global_step)
+                        await self.policy_model.offload_to_cpu()
+
+                else:
+                    if self.critic_model is not None:
+                        async with Timer("Actor and Critic model training"):
+                            status = await asyncio.gather(
+                                self.ppo_local_train_policy(policy_buffers, self.global_step),
+                                self.ppo_local_train_critic(critic_buffers, self.global_step),
+                            )
+                            await asyncio.gather(
+                                self.policy_model.async_run_method("empty_cache"),
+                                self.critic_model.async_run_method("empty_cache"),
+                            )
+                            status = status[0]
+                    else:
+                        async with Timer("Actor model training"):
+                            status = await self.ppo_local_train_policy(policy_buffers, self.global_step)
+                            await self.policy_model.async_run_method("empty_cache")
+
+                self.replay_buffer.clear()
+
+                # 5. set logs
+                logger.info(status)
+                pbar.update()
+                # log epoch info
+                self.writer.add_scalar("episode_idx", episode, self.global_step)
+                self.global_step += 1
+                if self.global_step % self.cfg.save_interval == 0:
+                    await self.policy_model.backload_to_gpu()
+                    await self.policy_model.async_save_model(self.tokenizer, self.global_step)
+                    await self.policy_model.offload_to_cpu()
+                    if self.critic_model is not None:
+                        await self.critic_model.backload_to_gpu()
+                        await self.critic_model.async_save_model(self.tokenizer, self.global_step)
+                        await self.critic_model.offload_to_cpu()
+                    logger.info("Successfully save model weights, training continue.")
+
+            if self.cfg.update_ref_every_epoch:
+                await self.policy_model.backload_to_gpu()
+                await self.policy_model.async_save_model(self.tokenizer, self.global_step)
+                await self.policy_model.offload_to_cpu()
+                await asyncio.gather(
+                    *self.ref_model.async_init_model_from_pretrained(
+                        self.strategy, os.path.join(self.cfg.save_path, f"iter{self.global_step}", "policy")
+                    )
+                )
+                logger.info("Successfully update ref model with policy model, training continue.")
+
+        await self.policy_model.async_save_model(self.tokenizer, self.cfg.num_episodes * len(self.prompts_dataloader))
+        logger.info("Successfully save model weights, training done.")
 
 
 class PPOExp(BasePPOExp):
@@ -1168,7 +1366,7 @@ class PPOExp(BasePPOExp):
 
     @cached_property
     def get_colocate_pg(self):
-        if self.cfg.vllm_impl == "oone":
+        if self.cfg.vllm_impl == "colocate":
             total_size = self.cfg.vllm_num_engines * self.cfg.vllm_tensor_parallel_size
             pg = placement_group([{"GPU": 1, "CPU": 1}] * total_size, strategy="PACK")
             ray.get(pg.ready())
@@ -1210,7 +1408,6 @@ class PPOExp(BasePPOExp):
             self.strategy,
             pretrain_mode=False,
             num_processors=1,
-            model_type=self.cfg.model_type,
         )
         logger.info(f"Finished processing {len(prompts_dataset)} dialogues")
         return prompts_dataset
@@ -1234,7 +1431,6 @@ class PPOExp(BasePPOExp):
             self.strategy,
             pretrain_mode=False,
             num_processors=1,
-            model_type=self.cfg.model_type,
         )
         logger.info(f"Finished processing {len(prompts_dataset)} dialogues")
         return prompts_dataset
@@ -1260,8 +1456,6 @@ class PPOExp(BasePPOExp):
 
 
 def main():
-    from orz.ppo.utils import tee_output
-
     exp = PPOExp().set_cfg(PPOLlamaExpConfig())
     logger.info(exp.get_cfg_as_str(exp.cfg))
     if not os.path.exists(exp.cfg.save_path):
@@ -1270,8 +1464,7 @@ def main():
         os.makedirs(exp.cfg.tensorboard_log_dir, exist_ok=True)
     if not os.path.exists(exp.cfg.ckpt_path):
         os.makedirs(exp.cfg.ckpt_path, exist_ok=True)
-    with tee_output(os.path.join(exp.cfg.save_path, "training.log")):
-        asyncio.run(exp.run())
+    asyncio.run(exp.run())
 
 
 if __name__ == "__main__":

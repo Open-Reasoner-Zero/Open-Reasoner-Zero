@@ -376,7 +376,7 @@ def create_vllm_engines(
     colocate_pg: Optional[PlacementGroup] = None,
     vllm_impl: str = "old"
 ):
-    if vllm_impl != "colocate":
+    if vllm_impl == "colocate":
         return _create_colocate_vllm_engines(
             num_engines=num_engines,
             tensor_parallel_size=tensor_parallel_size,

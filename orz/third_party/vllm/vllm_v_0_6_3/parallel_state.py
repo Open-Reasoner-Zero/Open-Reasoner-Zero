@@ -27,7 +27,7 @@ _TP = None
 _PP = None
 
 
-# NOTE (zhanghan): added for oone.
+# NOTE (zhanghan): added for orz.
 def init_model_parallel_group(
     group_ranks: List[List[int]],
     local_rank: int,
@@ -160,7 +160,7 @@ def initialize_model_parallel_for_vllm(
             local_rank=get_world_group().local_rank,
             backend=backend,
             use_custom_allreduce=False,  # TODO: check why True is not work in Ray trainer
-            # use_message_queue_broadcaster=True,  # NOTE (zhanghan): must not use this in oone
+            # use_message_queue_broadcaster=True,  # NOTE (zhanghan): must not use this in orz
         )
         ps._TP = _TP
         # _MICRO_DATA_PARALLEL_GROUP is move to hybrid engine
@@ -188,7 +188,7 @@ def initialize_model_parallel_for_vllm(
             local_rank=get_world_group().local_rank,
             backend=backend,
             use_custom_allreduce=False,
-            # use_message_queue_broadcaster=True,  # NOTE (zhanghan): must not use this in oone
+            # use_message_queue_broadcaster=True,  # NOTE (zhanghan): must not use this in orz
         )
         ps._TP = _TP
 
