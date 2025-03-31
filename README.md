@@ -54,17 +54,15 @@ Please refer to our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-
 We announce a major update to the `Open-Reasoner-Zero`:
 
 - 🌊 [Updated Paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) with new results, data processing and experiments.
-- 🔭 [Updated Experimental Settings](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground) for wider research community:
-  - [ORZ-1.5B setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py), as shown in Figure 2. 
-  - [ORZ-0.5B setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py), as shown in Figure 2. 
-  - [ORZ-0.5B minimal resource setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): can be run on single A800/H800 card!
-- 🤗 Updated HF Model [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
+- 🔭 [Updated Training Scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground) for wider research community:
+  - [ORZ-1.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py) and [ORZ-0.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py), main results are shown in Figure 2. 
+  - [ORZ-0.5B minimal resource training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): can be run on single A800/H800 card!
 - 📊 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
   - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json) + [13k mined super hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json).
-  - Used in improving the ORZ-32B's performance. 
-- 🔬 More HF Models: 
-  - [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B)
-  - [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
+  - 🤩 hard 13k data are used in the cooldown stage of ORZ-32B training: **AIME2024 from ~41% to ~48%**!
+- 🤗 More HF Models: 
+  - Updated HF Model: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
+  - Released HF Model: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
 - 🚀 Complete HF Critic Models for in-depth research: 
   - [`Open-Reasoner-Zero-Critic-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B)
   - [`Open-Reasoner-Zero-Critic-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B)
