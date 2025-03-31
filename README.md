@@ -172,6 +172,7 @@ python -m playground.orz_1p5b_ppo
 
 #### Debug Settings
 In the code, we leave an environment variable `DEBUG_MODE` to run in debug setting for researcher to iterate. (Thought for now, we recommend using `python -m playground.orz_0p5b_ppo_1gpu` for debugging.)
+
 The debug running command examples:
 ```bash
 # NOTE: just for debug, not final setting!
