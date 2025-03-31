@@ -185,11 +185,11 @@ DEBUG_MODE=True python -m playground.orz_1p5b_ppo
 
 
 
-## Acknowledgements
+## Acknowledgements 💖 
 
 - This work was supported by computing resources and valuable feedback provided by [StepFun](https://www.stepfun.com/) and Tsinghua University.
 - Our training framework is built on [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), [vllm](https://github.com/vllm-project/vllm), [DeepSpeed](https://github.com/deepspeedai/DeepSpeed) and [ray](https://github.com/ray-project/ray).
-- Our model is based on [Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B) and [Qwen2.5-32B](https://huggingface.co/Qwen/Qwen2.5-32B).
+- Our model is based on [Qwen2.5 Series](https://qwenlm.github.io/blog/qwen2.5-llm/) of **base models**, including [Qwen2.5-0.5B](https://huggingface.co/Qwen/Qwen2.5-0.5B), [Qwen2.5-1.5B](https://huggingface.co/Qwen/Qwen2.5-1.5B), [Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B) and [Qwen2.5-32B](https://huggingface.co/Qwen/Qwen2.5-32B).
 - We thank [Project Numina](https://projectnumina.ai/), [Tulu3](https://allenai.org/blog/tulu-3-technical) and [OpenR1-Math-220k](https://huggingface.co/datasets/open-r1/OpenR1-Math-220k) for their collected open sourced data.
 
 ## Advertisement Time 📣
@@ -199,7 +199,7 @@ We are hiring talented researchers and engineers to join our team. If you are in
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Open-Reasoner-Zero/Open-Reasoner-Zero&type=Timeline)](https://star-history.com/#Open-Reasoner-Zero/Open-Reasoner-Zero&Timeline)
 
-## Community Discussions
+## Community Discussions 🍺
 
 We have several wechat groups to help discussions and sharing, you can scan the QR code below to join the latest group.
 
