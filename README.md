@@ -63,10 +63,10 @@ We announce a major update to the `Open-Reasoner-Zero`:
 - 📊 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
   - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json) + [13k mined super hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json).
   - Used in improving the ORZ-32B's performance. 
-- 🔬 HF Models: 
+- 🔬 More HF Models: 
   - [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B)
   - [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
-- 🧠 Complete HF Critic Models for in-depth research: 
+- 🚀 Complete HF Critic Models for in-depth research: 
   - [`Open-Reasoner-Zero-Critic-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B)
   - [`Open-Reasoner-Zero-Critic-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B)
   - [`Open-Reasoner-Zero-Critic-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B)
