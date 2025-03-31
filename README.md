@@ -63,11 +63,7 @@ We announce a major update to the `Open-Reasoner-Zero`:
 - 🤗 More HF Models: 
   - Updated HF Model: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
   - Released HF Model: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
-- 🚀 Complete HF Critic Models for in-depth research: 
-  - [`Open-Reasoner-Zero-Critic-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B)
-  - [`Open-Reasoner-Zero-Critic-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B)
-  - [`Open-Reasoner-Zero-Critic-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B)
-  - [`Open-Reasoner-Zero-Critic-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)
+- 🚀 Complete HF Critic Models for in-depth research: `Open-Reasoner-Zero-Critic-`{[32B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B), [7B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B), [1.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B), [0.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)}
 
 <strong>[2025/02/18]</strong>
 We release `Open-Reasoner-Zero`. 
