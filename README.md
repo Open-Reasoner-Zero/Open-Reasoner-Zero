@@ -63,7 +63,7 @@ We announce a major milestone for `Open-Reasoner-Zero`:
 - 🤗 More HF Models: 
   - Updated HF Models: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B).
   - Released HF Models: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B).
-- 🚀 Complete HF Critic Models for in-depth research: `Open-Reasoner-Zero-Critic-`{[32B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B), [7B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B), [1.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B), [0.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)}.
+- 🚀 Full Suite of Critic Models for in-depth research: `Open-Reasoner-Zero-Critic-`{[0.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B), [1.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B), [7B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B),  [32B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B)}.
 
 <strong>[2025/02/18]</strong>
 We release `Open-Reasoner-Zero`. 
@@ -152,7 +152,8 @@ Your training log will be shown in the master node terminal.
 #### Start ORZ-0.5B PPO Training
 running command in 1 nodes:
 
-directly run `python -m playground.orz_0p5b_ppo` is fine
+directly run for :
+`python -m playground.orz_0p5b_ppo_1gpu` is fine for minimal 1 gpu setting. 
 
 #### Start ORZ-1.5B PPO Training
 running command in 2 nodes:
