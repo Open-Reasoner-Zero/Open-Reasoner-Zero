@@ -56,9 +56,9 @@ We announce a major update to the `Open-Reasoner-Zero`:
 
 - 🌊 [Updated Paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) with new results, data processing and experiments.
 - 🔭 [Updated Experimental Settings](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground) for wider research community:
-  - [ORZ-1.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py), as shown in Figure 2. 
-  - [ORZ-0.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py), as shown in Figure 2. 
-  - [ORZ-0.5B minimal experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): can be run on single A800/H800 card!
+  - [ORZ-1.5B setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py), as shown in Figure 2. 
+  - [ORZ-0.5B setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py), as shown in Figure 2. 
+  - [ORZ-0.5B minimal resource setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): can be run on single A800/H800 card!
 - 🤗 Updated HF Model [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
 - 📊 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
   - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json) + [13k mined super hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json).
