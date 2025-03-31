@@ -56,7 +56,7 @@ We announce a major milestone for `Open-Reasoner-Zero`:
 - 🌊 [Updated Paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) with new results.
 - 🔭 [Easy-to-use Training Scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground):
   - [ORZ-1.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py) and [ORZ-0.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py) (main results in Figure 2). 
-  - [Minimal resource training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): ORZ-0.5B can be run on a single A800/H800 card!
+  - [Minimal resource training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): ORZ-0.5B can be run on a single A800/H800 gpu!
 - 🤩 [Updated Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
   - 129k data in total:
     - [original 57k data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json).
@@ -132,7 +132,7 @@ You can start the ORZ-0.5B PPO training in single A800/H800 node:
 python -m playground.orz_0p5b_ppo
 ```
 
-You can even run in **a single A800/H800**: 
+You can even run in **a single A800/H800 gpu**: 
 ```bash
 python -m playground.orz_0p5b_ppo_1gpu
 ```
