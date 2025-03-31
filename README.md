@@ -61,8 +61,7 @@ We announce a major milestone for `Open-Reasoner-Zero`:
   - 129k data in total:
     - [original 57k data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json).
     - [extended 72k data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json).
-  - [13k hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json)
-    - mined from the above 129k data
+  - [13k hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json) mined from the above 129k data. 
     - used in the "annealing" stage of ORZ-32B training: **AIME2024 from ~41% to ~48%**!
 - 🤗 More HF Models: 
   - Updated HF Models: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B).
