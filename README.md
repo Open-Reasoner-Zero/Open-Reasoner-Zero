@@ -30,21 +30,24 @@ An Open Source Approach to Scaling Up Reinforcement Learning on the Base Model
 
 </div>
 
-![](figure/teaser.png)
-
-*Figure 1 | Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\}. Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\} on benchmarks (averaged on 16 responses) during training. Using the same base model as DeepSeek-R1-Zero-Qwen-32B, Open-Reasoner-Zero-32B achieves superior performance on AIME2024, MATH500, and GPQA Diamond benchmark-requiring only a tenth of the training steps.*
-
-![](figure/train_curve.png)
-*Figure 2 | Train-time Scale up on Train Reward and Response Length of Open-Reasoner-Zero (ORZ) - \{0.5B, 1.5B, 7B, 32B\}. Train Reward and Response Length increase steadily, demonstrating consistent scalability across model sizes. Interestingly, the ORZ-32B Response Length exhibits fluctuations without negatively impacting training stability, highlighting the robustness of our minimalist recipe.*
-
-## Overview
-🌊 We introduce **Open-Reasoner-Zero**, the first open source implementation of large-scale reasoning-oriented RL training focusing on scalability, simplicity and accessibility.
+## Overview 🌊
+We introduce **Open-Reasoner-Zero**, the first open source implementation of large-scale reasoning-oriented RL training focusing on scalability, simplicity and accessibility.
 
 To enable broader participation in this pivotal moment we witnessed and accelerate research towards artificial general intelligence (AGI), 
 we release our source code, parameter settings, training data, and model weights.
 Please refer to our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) for more insights across various model sizes. 
 
 **Let the Reasoner-Zero tide rise!**
+
+
+## Main Results 🏆
+
+![](figure/teaser.png)
+
+*Figure 1 | Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\}. Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\} on benchmarks (averaged on 16 responses) during training. Using the same base model as DeepSeek-R1-Zero-Qwen-32B, Open-Reasoner-Zero-32B achieves superior performance on AIME2024, MATH500, and GPQA Diamond benchmark-requiring only a tenth of the training steps.*
+
+![](figure/train_curve.png)
+*Figure 2 | Train-time Scale up on Train Reward and Response Length of Open-Reasoner-Zero (ORZ) - \{0.5B, 1.5B, 7B, 32B\}. Train Reward and Response Length increase steadily, demonstrating consistent scalability across model sizes. Interestingly, the ORZ-32B Response Length exhibits fluctuations without negatively impacting training stability, highlighting the robustness of our minimalist recipe.*
 
 ## Releases 📦
 
@@ -53,8 +56,9 @@ We announce a major update to the `Open-Reasoner-Zero`:
 
 - 🌊 [Updated Paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) with new results, data processing and experiments.
 - 🔭 [Updated Experimental Settings](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground) for wider research community:
-  - [ORZ-1.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py). 
-  - [ORZ-0.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py). Can be run on single A800/H800 node!
+  - [ORZ-1.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py), as shown in Figure 2. 
+  - [ORZ-0.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py), as shown in Figure 2. 
+  - [ORZ-0.5B minimal experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): can be run on single A800/H800 card!
 - 🤗 Updated HF Model [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
 - 📊 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
   - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json) + [13k mined super hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json).
@@ -83,6 +87,15 @@ As part of this release, we open-source:
 - Colocate training and generation in the same GPUs to maximize GPU utilization.
 
 ## Getting Started 🚀
+### Data
+
+We release all of curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder:
+* [original 57k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json), collected from various sources.
+* [extended 72k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json), mainly cleaned from OpenR1-Math-220k.
+* [hard 13k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), mined from the first stage of ORZ-32B training.
+
+The details for how to collect data are described in our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf).
+
 ### Installation & Training Scripts
 We release our [Dockerfile](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/docker/Dockerfile) in [docker](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/docker) folder to facilitate the reproducibility of our training.
 
@@ -170,14 +183,7 @@ debug running command in 1 nodes:
 DEBUG_MODE=True python -m playground.orz_1p5b_ppo
 ```
 
-### Data
 
-We release all of curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder:
-* [original 57k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json), collected from various sources.
-* [extended 72k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json), mainly cleaned from OpenR1-Math-220k.
-* [hard 13k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), mined from the first stage of ORZ-32B training.
-
-The details for how to collect data are described in our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf).
 
 ## Acknowledgements
 
