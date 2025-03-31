@@ -57,9 +57,13 @@ We announce a major milestone for `Open-Reasoner-Zero`:
 - 🔭 [Easy-to-use Training Scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground):
   - [ORZ-1.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py) and [ORZ-0.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py) (main results in Figure 2). 
   - [Minimal resource training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): ORZ-0.5B can be run on a single A800/H800 card!
-- 🤩 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
-  - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json).
-  - [13k mined hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), used in the "annealing" stage of ORZ-32B training: **AIME2024 from ~41% to ~48%**!
+- 🤩 [Updated Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
+  - 129k data in total:
+    - [original 57k data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json).
+    - [extended 72k data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json).
+  - [13k hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json)
+    - mined from the above 129k data
+    - used in the "annealing" stage of ORZ-32B training: **AIME2024 from ~41% to ~48%**!
 - 🤗 More HF Models: 
   - Updated HF Models: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B).
   - Released HF Models: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B).
@@ -83,8 +87,9 @@ As part of this release, we open-source:
 ### Data
 
 We release all of curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder:
-* [original 57k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json), collected from various sources, including AIME (up to 2023), MATH, Numina-Math collection and Tulu3 MATH.
-* [extended 72k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json), mainly cleaned from OpenR1-Math-220k.
+* curated 129k data:
+  * [original 57k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json), collected from various sources, including AIME (up to 2023), MATH, Numina-Math collection and Tulu3 MATH.
+  * [extended 72k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json), mainly cleaned from OpenR1-Math-220k.
 * [hard 13k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), mined from the first stage of ORZ-32B training.
 
 The details for how to collect data are described in our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf).
@@ -97,9 +102,81 @@ To install the package, run:
 pip install -e .
 ```
 
+#### Start ORZ-32B PPO Training
+Here are the starting commands in 16 nodes. 
+
+First on master node, run:
+```bash
+ray start --head
+# you will see logging like:
+# Next steps
+#  To add another node to this Ray cluster, run
+#    ray start --address='<master-node-ip>:<master-node-port>'
+```
+
+then on all other nodes, run:
+```bash
+ray start --address='<master-node-ip>:<master-node-port>' # <master-node-ip> and <master-node-port> are from above loggings!
+```
+
+finally on master node, just run:
+```bash
+python -m playground.orz_32b_ppo
+```
+Your training log will be shown in the master node terminal.
+
+------
+
+#### Start ORZ-0.5B PPO Training
+You can start the ORZ-0.5B PPO training in single A800/H800 node:
+```bash
+python -m playground.orz_0p5b_ppo
+```
+
+You can even run in **a single A800/H800**: 
+```bash
+python -m playground.orz_0p5b_ppo_1gpu
+```
+
+note: since we are not in multi-node setting, no `ray start` like logics are needed.
+
+------
+
 #### Start ORZ-7B PPO Training
 
-debug running command:
+Multi-node Training on 4 nodes:
+```bash
+# set up for multi-node training
+ray start --head # on master node
+ray start --address='<master-node-ip>:<master-node-port>' # then on other nodes
+```
+then on master node, run:
+```bash
+python -m playground.orz_7b_ppo
+```
+
+Your training log will be shown in the master node terminal.
+
+-----
+
+#### Start ORZ-1.5B PPO Training
+
+Multi-node Training on 2 nodes:
+```bash
+# set up for multi-node training
+ray start --head # on master node
+ray start --address='<master-node-ip>:<master-node-port>' # then on other nodes
+```
+then on master node, run:
+```bash
+python -m playground.orz_1p5b_ppo
+```
+
+----
+
+#### Debug Settings
+In the code, we leave an environment variable `DEBUG_MODE` to run in debug setting for researcher to iterate. (Thought for now, we recommend using `python -m playground.orz_0p5b_ppo_1gpu` for debugging.)
+The debug running command examples:
 ```bash
 # NOTE: just for debug, not final setting!
 
@@ -109,75 +186,6 @@ DEBUG_MODE=True python -m playground.orz_14m_ppo_mini
 ## Debug command in a single node (8 GPUs) with `Qwen/Qwen2.5-7B`
 DEBUG_MODE=True python -m playground.orz_7b_ppo
 ```
-
-Multi-node Training on 4 nodes:
-
-first on master node, run:
-```bash
-ray start --head
-```
-
-then on other nodes, run:
-```bash
-ray start --address='<master-node-ip>:<master-node-port>'
-```
-
-then on master node, run:
-```bash
-python -m playground.orz_7b_ppo
-```
-
-Your training log will be shown in the master node terminal.
-
-#### Start ORZ-32B PPO Training
-running command in 16 nodes:
-
-first on master node, run:
-```bash
-ray start --head
-```
-
-then on other nodes, run:
-```bash
-ray start --address='<master-node-ip>:<master-node-port>'
-```
-
-then on master node, run:
-```bash
-python -m playground.orz_32b_ppo
-```
-
-Your training log will be shown in the master node terminal.
-
-#### Start ORZ-0.5B PPO Training
-running command in 1 nodes:
-
-directly run for :
-`python -m playground.orz_0p5b_ppo_1gpu` is fine for minimal 1 gpu setting. 
-
-#### Start ORZ-1.5B PPO Training
-running command in 2 nodes:
-
-on master node, first run:
-```bash
-ray start --head
-```
-then on other nodes, run:
-```bash
-ray start --address='<master-node-ip>:<master-node-port>'
-```
-then on master node, run:
-```bash
-python -m playground.orz_1p5b_ppo
-```
-
-
-debug running command in 1 nodes:
-```bash
-DEBUG_MODE=True python -m playground.orz_1p5b_ppo
-```
-
-
 
 ## Acknowledgements 💖 
 
