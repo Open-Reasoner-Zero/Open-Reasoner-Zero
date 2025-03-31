@@ -148,9 +148,8 @@ Multi-node Training on 4 nodes:
 # set up for multi-node training
 ray start --head # on master node
 ray start --address='<master-node-ip>:<master-node-port>' # then on other nodes
-```
-then on master node, run:
-```bash
+
+# then on master node, run:
 python -m playground.orz_7b_ppo
 ```
 
@@ -165,9 +164,7 @@ Multi-node Training on 2 nodes:
 # set up for multi-node training
 ray start --head # on master node
 ray start --address='<master-node-ip>:<master-node-port>' # then on other nodes
-```
-then on master node, run:
-```bash
+# then on master node, run:
 python -m playground.orz_1p5b_ppo
 ```
 
@@ -181,7 +178,6 @@ The debug running command examples:
 
 ## Debug command in a single GPU with `EleutherAI/pythia-14m`
 DEBUG_MODE=True python -m playground.orz_14m_ppo_mini
-
 ## Debug command in a single node (8 GPUs) with `Qwen/Qwen2.5-7B`
 DEBUG_MODE=True python -m playground.orz_7b_ppo
 ```
