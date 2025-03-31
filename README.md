@@ -5,7 +5,6 @@
 <img src="figure/logo.jpg" width="300"/>
 
 <div>
-<!-- I want to use a tide emoji here -->
 
 An Open Source Approach to Scaling Up Reinforcement Learning on the Base Model
 </div>
