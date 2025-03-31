@@ -91,7 +91,7 @@ To install the package, run:
 pip install -e .
 ```
 
-#### Start Orz-7B PPO Training
+#### Start ORZ-7B PPO Training
 
 debug running command:
 ```bash
@@ -123,7 +123,7 @@ python -m playground.orz_7b_ppo
 
 Your training log will be shown in the master node terminal.
 
-#### Start Orz-32B PPO Training
+#### Start ORZ-32B PPO Training
 running command in 16 nodes:
 
 first on master node, run:
@@ -143,12 +143,12 @@ python -m playground.orz_32b_ppo
 
 Your training log will be shown in the master node terminal.
 
-#### Start Orz-0.5B PPO Training
+#### Start ORZ-0.5B PPO Training
 running command in 1 nodes:
 
 directly run `python -m playground.orz_0p5b_ppo` is fine
 
-#### Start Orz-1.5B PPO Training
+#### Start ORZ-1.5B PPO Training
 running command in 2 nodes:
 
 on master node, first run:
@@ -173,9 +173,9 @@ DEBUG_MODE=True python -m playground.orz_1p5b_ppo
 ### Data
 
 We release all of curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder:
-* original 57k, collected from various sources.
-* extended 72k, mainly cleaned from OpenR1-Math-220k.
-* hard 13k, mined from the first stage of ORZ-32B training.
+* [original 57k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_57k_collected.json), collected from various sources.
+* [extended 72k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json), mainly cleaned from OpenR1-Math-220k.
+* [hard 13k](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), mined from the first stage of ORZ-32B training.
 
 The details for how to collect data are described in our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf).
 
