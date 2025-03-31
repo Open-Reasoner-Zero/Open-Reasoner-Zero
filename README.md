@@ -195,9 +195,9 @@ We are hiring talented researchers and engineers to join our team. If you are in
 
 ## Community Discussions
 
-We have a wechat group to help discussions and sharing, you can scan the QR code below to join.
+We have several wechat groups to help discussions and sharing, you can scan the QR code below to join the latest group.
 
-<img src="figure/WeChatGroup_0224.png" width="300" style="display: block; margin: 0 auto;"/>
+<img src="figure/WeChatGroup.png" width="300" style="display: block; margin: 0 auto;"/>
 
 ## Citation
 
