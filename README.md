@@ -32,21 +32,41 @@ An Open Source Approach to Scaling Up Reinforcement Learning on the Base Model
 
 ![](figure/teaser.png)
 
-*Figure 1 | Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\}. We report the average accuracy on the benchmark dataset for each question with 16 responses. Notably, Open-Reasoner-Zero-32B outperforms DeepSeek-R1-Zero-Qwen-32B on the GPQA Diamond benchmark while only requiring 1/30 of the training steps. We are continuing to scale up these RL settings until this preprint is released, as there is no sign of saturation.*
+*Figure 1 | Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\}. Evaluation performance of Open-Reasoner-Zero-\{7B, 32B\} on benchmarks (averaged on 16 responses) during training. Using the same base model as DeepSeek-R1-Zero-Qwen-32B, Open-Reasoner-Zero-32B achieves superior performance on AIME2024, MATH500, and GPQA Diamond benchmark-requiring only a tenth of the training steps.*
 
 ![](figure/train_curve.png)
-*Figure 2 | Train Time Scale up both on Reward and Response Length of Open-Reasoner-Zero-{7B, 32B}.*
+*Figure 2 | Train-time Scale up on Train Reward and Response Length of Open-Reasoner-Zero (ORZ) - \{0.5B, 1.5B, 7B, 32B\}. Train Reward and Response Length increase steadily, demonstrating consistent scalability across model sizes. Interestingly, the ORZ-32B Response Length exhibits fluctuations without negatively impacting training stability, highlighting the robustness of our minimalist recipe.*
 
 ## Overview
 🌊 We introduce **Open-Reasoner-Zero**, the first open source implementation of large-scale reasoning-oriented RL training focusing on scalability, simplicity and accessibility.
 
 To enable broader participation in this pivotal moment we witnessed and accelerate research towards artificial general intelligence (AGI), 
 we release our source code, parameter settings, training data, and model weights.
-Please refer to our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) for more insights.
+Please refer to our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) for more insights across various model sizes. 
 
 **Let the Reasoner-Zero tide rise!**
 
 ## Releases 📦
+
+<strong>[2025/03/31]</strong>
+We announce a major update to the `Open-Reasoner-Zero`:
+
+- 🌊 [Updated Paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf) with new results, data processing and experiments.
+- 🔭 [Updated Experimental Settings](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/playground) for wider research community:
+  - [ORZ-1.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py). 
+  - [ORZ-0.5B experimental setting](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py). Can be run on single A800/H800 node!
+- 🤗 Updated HF Model [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
+- 📊 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
+  - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json) + [13k mined super hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json).
+  - Used in improving the ORZ-32B's performance. 
+- 🔬 HF Models: 
+  - [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B)
+  - [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
+- 🧠 Complete HF Critic Models for in-depth research: 
+  - [`Open-Reasoner-Zero-Critic-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B)
+  - [`Open-Reasoner-Zero-Critic-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B)
+  - [`Open-Reasoner-Zero-Critic-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B)
+  - [`Open-Reasoner-Zero-Critic-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)
 
 <strong>[2025/02/18]</strong>
 We release `Open-Reasoner-Zero`. 
@@ -123,9 +143,39 @@ python -m playground.orz_32b_ppo
 
 Your training log will be shown in the master node terminal.
 
+#### Start Orz-0.5B PPO Training
+running command in 1 nodes:
+
+directly run `python -m playground.orz_0p5b_ppo` is fine
+
+#### Start Orz-1.5B PPO Training
+running command in 2 nodes:
+
+on master node, first run:
+```bash
+ray start --head
+```
+then on other nodes, run:
+```bash
+ray start --address='<master-node-ip>:<master-node-port>'
+```
+then on master node, run:
+```bash
+python -m playground.orz_1p5b_ppo
+```
+
+
+debug running command in 1 nodes:
+```bash
+DEBUG_MODE=True python -m playground.orz_1p5b_ppo
+```
+
 ### Data
 
-We release all of 57k curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder.
+We release all of curated high-quality training data in the [`data`](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data) folder:
+* original 57k, collected from various sources.
+* extended 72k, mainly cleaned from OpenR1-Math-220k.
+* hard 13k, mined from the first stage of ORZ-32B training.
 
 The details for how to collect data are described in our [paper](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/ORZ_paper.pdf).
 
@@ -134,7 +184,7 @@ The details for how to collect data are described in our [paper](https://github.
 - This work was supported by computing resources and valuable feedback provided by [StepFun](https://www.stepfun.com/) and Tsinghua University.
 - Our training framework is built on [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), [vllm](https://github.com/vllm-project/vllm), [DeepSpeed](https://github.com/deepspeedai/DeepSpeed) and [ray](https://github.com/ray-project/ray).
 - Our model is based on [Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B) and [Qwen2.5-32B](https://huggingface.co/Qwen/Qwen2.5-32B).
-- We thank [Project Numina](https://projectnumina.ai/) and [Tulu3](https://allenai.org/blog/tulu-3-technical) for their collected open sourced data.
+- We thank [Project Numina](https://projectnumina.ai/), [Tulu3](https://allenai.org/blog/tulu-3-technical) and [OpenR1-Math-220k](https://huggingface.co/datasets/open-r1/OpenR1-Math-220k) for their collected open sourced data.
 
 ## Advertisement Time 📣
 
