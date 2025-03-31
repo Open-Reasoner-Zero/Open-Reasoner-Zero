@@ -58,12 +58,12 @@ We announce a major milestone for `Open-Reasoner-Zero`:
   - [ORZ-1.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_1p5b_ppo.py) and [ORZ-0.5B training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo.py) (main results in Figure 2). 
   - [Minimal resource training scripts](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/playground/orz_0p5b_ppo_1gpu.py): ORZ-0.5B can be run on a single A800/H800 card!
 - 🤩 [New Curated Datasets](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/tree/main/data): 
-  - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json)
+  - [72k extended data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_72k_collection_extended.json).
   - [13k mined hard data](https://github.com/Open-Reasoner-Zero/Open-Reasoner-Zero/blob/main/data/orz_math_13k_collection_hard.json), used in the "annealing" stage of ORZ-32B training: **AIME2024 from ~41% to ~48%**!
 - 🤗 More HF Models: 
-  - Updated HF Models: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B)
-  - Released HF Models: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B)
-- 🚀 Complete HF Critic Models for in-depth research: `Open-Reasoner-Zero-Critic-`{[32B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B), [7B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B), [1.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B), [0.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)}
+  - Updated HF Models: [`Open-Reasoner-Zero-7B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-7B) and [`Open-Reasoner-Zero-32B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-32B).
+  - Released HF Models: [`Open-Reasoner-Zero-1.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-1.5B) and [`Open-Reasoner-Zero-0.5B`](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-0.5B).
+- 🚀 Complete HF Critic Models for in-depth research: `Open-Reasoner-Zero-Critic-`{[32B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-32B), [7B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-7B), [1.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-1.5B), [0.5B](https://huggingface.co/Open-Reasoner-Zero/Open-Reasoner-Zero-Critic-0.5B)}.
 
 <strong>[2025/02/18]</strong>
 We release `Open-Reasoner-Zero`. 
