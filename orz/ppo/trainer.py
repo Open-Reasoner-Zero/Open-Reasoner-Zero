@@ -399,6 +399,8 @@ class RayPPOTrainer:
                 await self.critic_model.offload_to_cpu()
 
         # calculate ref log probs
+        if self.cfg.offload_ref_model:
+            await self.ref_model.backload_to_gpu()
         base_action_log_probs_ref = micro_infer_model(
             num_ref_dp_groups, "ref_model", sequences_all, num_actions_all, attention_mask_all, packed_seq_lens_all
         )
@@ -412,7 +414,10 @@ class RayPPOTrainer:
         # handle colocate actor and ref model
         if self.cfg.colocate_actor_ref or self.cfg.colocate_all:
             base_log_probs = await base_action_log_probs_ref
-            await self.ref_model.async_run_method("empty_cache")
+            if self.cfg.offload_ref_model:
+                await self.ref_model.offload_to_cpu()
+            else:
+                await self.ref_model.async_run_method("empty_cache")
 
         # calculate rewards
         reward_refs = []
