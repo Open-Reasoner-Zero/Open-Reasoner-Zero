@@ -118,7 +118,9 @@ def _validate_args(args: DictConfig):
 def masked_mean(tensor: torch.Tensor, mask: Optional[torch.Tensor], dim: int = None) -> torch.Tensor:
     if mask is None:
         return tensor.mean(axis=dim)
-    return (tensor * mask).sum(axis=dim) / mask.sum(axis=dim)
+    # Selecting valid entries avoids NaN from inf * 0 at padding positions.
+    masked_tensor = torch.where(mask.bool(), tensor, torch.zeros_like(tensor))
+    return (masked_tensor * mask).sum(axis=dim) / mask.sum(axis=dim).clamp_min(1)
 
 
 @torch.no_grad()
