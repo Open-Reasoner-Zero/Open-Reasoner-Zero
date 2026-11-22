@@ -123,7 +123,11 @@ class PolicyLoss(nn.Module):
         advantages: torch.Tensor,
         action_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        ratio = (log_probs - old_log_probs).exp()
+        log_ratio = log_probs - old_log_probs
+        if action_mask is not None:
+            # Excluded positions can contain padding sentinels or extreme logits.
+            log_ratio = torch.where(action_mask.bool(), log_ratio, torch.zeros_like(log_ratio))
+        ratio = log_ratio.exp()
         surr1 = ratio * advantages
         surr2 = ratio.clamp(1 - self.clip_eps, 1 + self.clip_eps) * advantages
         loss = -torch.min(surr1, surr2)
